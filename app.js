@@ -116,22 +116,41 @@ function displaySelection(oldX, oldY, newX, newY) {
     console.log(oldX, oldY, newX, newY);
     if (oldX >= 0 && oldY >= 0) {
         grid.tileOverlays[oldX][oldY] = new TileOverlay();
+
+        if (grid.entities[oldX][oldY].type === "unit") {
+            showUnitPossibleMoves(oldX, oldY, grid.entities[oldX][oldY].movementSpeed, false);
+        }
     }
     if (newX >= 0 && newY >= 0) {
         grid.tileOverlays[newX][newY] = new WhiteOverlay();
-
-        if (grid.entities[newX][newY].type === "unit"){
+        if (grid.entities[newX][newY].type === "unit") {
             //todo show movement selection
-            showUnitPossibleMoves(newX,newY);
+            if (oldX >= 0 && oldY >= 0) {
+                showUnitPossibleMoves(oldX, oldY, grid.entities[newX][newY].movementSpeed, false);
+            }
+            showUnitPossibleMoves(newX, newY, grid.entities[newX][newY].movementSpeed, true);
+
         }
     }
 
-}
-
-function showUnitPossibleMoves(x,y) {
 
 }
 
+function showUnitPossibleMoves(x, y, moves, show) {
+    if (grid.tiles[x][y].type !== "water") {
+        let movementCost = grid.tiles[x][y].movementCost;
+        if (show === true) {
+            grid.tileOverlays[x][y] = new WhiteOverlay();
+        } else {
+            grid.tileOverlays[x][y] = new TileOverlay();
+        }
+        if (moves <= 0) return;
+        showUnitPossibleMoves(x - 1, y, moves - grid.tiles[x - 1][y].movementCost, show);
+        showUnitPossibleMoves(x + 1, y, moves - grid.tiles[x + 1][y].movementCost, show);
+        showUnitPossibleMoves(x, y - 1, moves - grid.tiles[x][y - 1].movementCost, show);
+        showUnitPossibleMoves(x, y + 1, moves - grid.tiles[x][y + 1].movementCost, show);
+    }
+}
 
 
 window.onclick = (e) => {
@@ -168,6 +187,7 @@ class Tile {
         this.terrain = false;
         this.type = "ground";
         this.tileHeight = 0;
+        this.movementCost = 1;
     }
 }
 
@@ -184,6 +204,7 @@ class Bridge extends Tile {
         super();
         this.type = "ground";
         this.image = bridgeImage;
+        this.movementCost = 1;
     }
 }
 
@@ -192,6 +213,7 @@ class Grass extends Tile {
         super();
         this.type = "ground";
         this.image = grassTileDefaultImage;
+        this.movementCost = 1
     }
 }
 
@@ -201,6 +223,7 @@ class GrassHills extends Tile {
         this.type = "ground";
         this.image = grassHillsTile;
         this.tileHeight = 4;
+        this.movementCost = 2;
     }
 }
 
@@ -218,6 +241,7 @@ class Stone extends Tile {
         this.type = "block";
         this.image = stoneTileImage;
         this.tileHeight = 7;
+        this.movementCost = 3;
     }
 }
 
@@ -249,7 +273,7 @@ class Tank extends Entity {
 
         this.maxHealth = 100;
         this.health = this.maxHealth;
-        this.movementSpeed = 2;
+        this.movementSpeed = 3;
 
     }
 }
@@ -393,10 +417,10 @@ function drawBoard() {
 
 }
 
-function makeBridge(){
+function makeBridge() {
     let bridgeX = Math.floor(Math.random() * (GRID_WIDTH - 8) + 4);
-    for (let bridgeY = 6; bridgeY < GRID_HEIGHT-5; bridgeY++) {
-        if (grid.tiles[bridgeX][bridgeY].type === "water"){
+    for (let bridgeY = 6; bridgeY < GRID_HEIGHT - 5; bridgeY++) {
+        if (grid.tiles[bridgeX][bridgeY].type === "water") {
             grid.tiles[bridgeX][bridgeY] = new Bridge();
         }
     }
@@ -417,7 +441,7 @@ grassTileDefaultImage.onload = () => {
     initializeGrid();
     generateMainSquareIsland();
 
-    generateMiddleRiver(Math.floor(Math.random()*3));
+    generateMiddleRiver(Math.floor(Math.random() * 3));
 
     generateHills(20);
     generateHills(20);
